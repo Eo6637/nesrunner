@@ -5,10 +5,17 @@
 
 	seg.u ZEROPAGE
 	org $0
+        
+Ptr		.word	; use for temp pointer storage
+Speed		.byte   ; vertical speed of character
+Scroll		.byte   ; horizontal scroll
+PPUCtrlSt	.byte	; PPU Control state
+PauseBit	.byte
+     
 
 ;;;;; NES CARTRIDGE HEADER
 
-	NES_HEADER 0,2,1,0 ; mapper 0, 2 PRGs, 1 CHR, horiz. mirror
+	NES_HEADER 0,2,1,1 ; mapper 0, 2 PRGs, 1 CHR, vert mirror
 
 ;;;;; START OF CODE
 
@@ -18,31 +25,94 @@ Start:
         jsr WaitSync	; wait for VSYNC
         jsr ClearRAM	; clear RAM
         jsr WaitSync	; wait for VSYNC (and PPU warmup)
+        
+        lda #255
+        STA Scroll	; store scroll counter
+        
 ; set palette
 	lda #$3f	; $3F -> A register
         sta PPU_ADDR	; write high byte first
 	lda #$00	; $00 -> A register
         sta PPU_ADDR    ; $3F00 -> PPU address
-        lda #$1c	; $1C = light blue color
-        sta PPU_DATA    ; $1C -> PPU data
+.load_pal:        
+        lda Palette,X
+        sta PPU_DATA
+        inx
+        cpx #$20
+        bne .load_pal
+        
+        jsr DrawBG
+        
 ; activate PPU graphics
-        lda #MASK_BG	; A = $08
+        lda #%00011110
         sta PPU_MASK	; enable rendering
-        lda #CTRL_NMI	; A = $80
+        lda #%10010000
         sta PPU_CTRL	; enable NMI
+        sta PPUCtrlSt
 .endless
 	jmp .endless	; endless loop
 
 ;;;;; COMMON SUBROUTINES
 
 	include "nesppu.dasm"
+        include "background.dasm"
 
 ;;;;; INTERRUPT HANDLERS
 
 NMIHandler:
+	lda #$00
+        sta OAM_ADDR
+        lda #$02
+        sta OAM_DMA
+        lda #$00
+        
+        lda Scroll
+        cmp #255
+        bne set_scroll_pos
+        
+        lda PPUCtrlSt
+        eor #%00000001
+        sta PPUCtrlSt
+        sta PPU_CTRL
+        lda #$0
+        sta Scroll
+
+set_scroll_pos:
+	lda PauseBit
+        cmp #$00
+        bne prevent_scroll
+        
+        inc Scroll
+        lda Scroll
+        sta PPU_SCROLL
+        lda #$00
+        sta PPU_SCROLL
+prevent_scroll:
 	rti
+        
+;;;;; CONSTANT DATA
+
+Tile1:
+	hex 1a
+        
+Palette:
+	hex 22271720	; Palette 1
+        hex 22061719	; Palette 2
+        hex 22192a3b	; Palette 3
+        hex 22222222	; Palette 4 placeholder
+        hex 22222222	; Sprite 1
+        hex 22222222	; Sprite 2
+        hex 22222222	; Sprite 3
+        hex 22222222	; Sprite 4
+
 
 ;;;;; CPU VECTORS
 
 	NES_VECTORS
+        
+;;;;; CHAR SETS
+	
+        org $10000
+        incbin "runner.chr"
+        incbin "runner.chr"
 

@@ -1,48 +1,730 @@
-
 	include "nesdefs.dasm"
-
-;;;;; VARIABLES
-
-	seg.u ZEROPAGE
-	org $0
-
-;;;;; NES CARTRIDGE HEADER
-
-	NES_HEADER 0,2,1,0 ; mapper 0, 2 PRGs, 1 CHR, horiz. mirror
 
 ;;;;; START OF CODE
 
-Start:
-; wait for PPU warmup; clear CPU RAM
-	NES_INIT	; set up stack pointer, turn off PPU
-        jsr WaitSync	; wait for VSYNC
-        jsr ClearRAM	; clear RAM
-        jsr WaitSync	; wait for VSYNC (and PPU warmup)
-; set palette
-	lda #$3f	; $3F -> A register
-        sta PPU_ADDR	; write high byte first
-	lda #$00	; $00 -> A register
-        sta PPU_ADDR    ; $3F00 -> PPU address
-        lda #$1c	; $1C = light blue color
-        sta PPU_DATA    ; $1C -> PPU data
-; activate PPU graphics
-        lda #MASK_BG	; A = $08
-        sta PPU_MASK	; enable rendering
-        lda #CTRL_NMI	; A = $80
-        sta PPU_CTRL	; enable NMI
-.endless
-	jmp .endless	; endless loop
+DrawBG:
+; Draw lawn
+	lda PPU_STATUS
+        lda #$22
+        sta PPU_ADDR
+        lda #$40
+        sta PPU_ADDR
+        lda #$06
+        ldx #0
+.loop1:
+	sta PPU_DATA
+        inx
+        cpx #$40	; Have we written 64 tiles?
+        bne .loop1	; if not, keep going
+        
+        lda PPU_STATUS
+        lda #$26
+        sta PPU_ADDR
+        lda #$40
+        sta PPU_ADDR
+        lda #$06
+        ldx #0
+.loop2:
+	sta PPU_DATA
+        inx
+        cpx #$40	; Have we written 64 tiles?
+        bne .loop2	; if not, keep going
+        
+Setup2:
+; Draw brown track
+	lda PPU_STATUS
+        lda #$22
+        sta PPU_ADDR
+        lda #$80
+        sta PPU_ADDR
+        lda #$04
+        ldx #0
+.loop3:
+	sta PPU_DATA
+        inx
+        cpx #$60	; Have we written 96 tiles?
+        bne .loop3	; if not, keep going
+        
+        lda PPU_STATUS
+        lda #$26
+        sta PPU_ADDR
+        lda #$80
+        sta PPU_ADDR
+        lda #$04
+        ldx #0
+.loop4:
+	sta PPU_DATA
+        inx
+        cpx #$60	; Have we written 96 tiles?
+        bne .loop4	; if not, keep going
+        
+Setup3:
+; Draw tan track
+	lda PPU_STATUS
+        lda #$22
+        sta PPU_ADDR
+        lda #$e0
+        sta PPU_ADDR
+        lda #$02
+        ldx #0
+.loop5:
+	sta PPU_DATA
+        inx
+        cpx #$60	; Have we written 96 tiles?
+        bne .loop5	; if not, keep going 
+        
+        lda PPU_STATUS
+        lda #$26
+        sta PPU_ADDR
+        lda #$e0
+        sta PPU_ADDR
+        lda #$02
+        ldx #0
+.loop6:
+	sta PPU_DATA
+        inx
+        cpx #$60	; Have we written 96 tiles?
+        bne .loop6	; if not, keep going 
+        
+Setup4:
+; Draw foreground
+	lda PPU_STATUS
+        lda #$23
+        sta PPU_ADDR
+        lda #$40
+        sta PPU_ADDR
+        lda #$05
+        ldx #0
+.loop7:
+	sta PPU_DATA
+        inx
+        cpx #$40	; Have we written 64 tiles?
+        bne .loop7	; if not, keep going 
+        
+        lda PPU_STATUS
+        lda #$27
+        sta PPU_ADDR
+        lda #$40
+        sta PPU_ADDR
+        lda #$05
+        ldx #0
+.loop8:
+	sta PPU_DATA
+        inx
+        cpx #$40	; Have we written 64 tiles?
+        bne .loop8	; if not, keep going 
+        
+; Draw tile 01
+	lda PPU_STATUS
+        PPU_SETADDR $2320
+        lda #$01
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2301
+        lda #$01
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $22e2
+        lda #$01
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2328
+        lda #$01
+        sta PPU_DATA
 
-;;;;; COMMON SUBROUTINES
+	lda PPU_STATUS
+        PPU_SETADDR $2309
+        lda #$01
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $22ea
+        lda #$01
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2330
+        lda #$01
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2311
+        lda #$01
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $22f2
+        lda #$01
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2338
+        lda #$01
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2319
+        lda #$01
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $22fa
+        lda #$01
+        sta PPU_DATA
+        
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2720
+        lda #$01
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2701
+        lda #$01
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $26e2
+        lda #$01
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2728
+        lda #$01
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2709
+        lda #$01
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $26ea
+        lda #$01
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2730
+        lda #$01
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2711
+        lda #$01
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $26f2
+        lda #$01
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2738
+        lda #$01
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2719
+        lda #$01
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $26fa
+        lda #$01
+        sta PPU_DATA
+        
+; Draw tile 03
+	lda PPU_STATUS
+        PPU_SETADDR $22c3
+        lda #$03
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $22a4
+        lda #$03
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2285
+        lda #$03
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $22cb
+        lda #$03
+        sta PPU_DATA
 
-	include "nesppu.dasm"
-
-;;;;; INTERRUPT HANDLERS
-
-NMIHandler:
-	rti
-
-;;;;; CPU VECTORS
-
-	NES_VECTORS
-
+	lda PPU_STATUS
+        PPU_SETADDR $22ac
+        lda #$03
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $228d
+        lda #$03
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $22d3
+        lda #$03
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $22b4
+        lda #$03
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2295
+        lda #$03
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $22db
+        lda #$03
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $22bc
+        lda #$03
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $229d
+        lda #$03
+        sta PPU_DATA
+        
+        
+        lda PPU_STATUS
+        PPU_SETADDR $26c3
+        lda #$03
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $26a4
+        lda #$03
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2685
+        lda #$03
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $26cb
+        lda #$03
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $26ac
+        lda #$03
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $268d
+        lda #$03
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $26d3
+        lda #$03
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $26b4
+        lda #$03
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2695
+        lda #$03
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $26db
+        lda #$03
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $26bc
+        lda #$03
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $269d
+        lda #$03
+        sta PPU_DATA
+        
+; Draw tile 07
+	lda PPU_STATUS
+        PPU_SETADDR $2262
+        lda #$07
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2246
+        lda #$07
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $226c
+        lda #$07
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2255
+        lda #$07
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $227c
+        lda #$07
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2669
+        lda #$07
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $264e
+        lda #$07
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2671
+        lda #$07
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2652
+        lda #$07
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $267a
+        lda #$07
+        sta PPU_DATA
+        
+; Draw tile 08
+	lda PPU_STATUS
+        PPU_SETADDR $2083
+        lda #$08
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2146
+        lda #$08
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $214c
+        lda #$08
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2091
+        lda #$08
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $20f5
+        lda #$08
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $219b
+        lda #$08
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2523
+        lda #$08
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $24ca
+        lda #$08
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $254f
+        lda #$08
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $24d6
+        lda #$08
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $24bc
+        lda #$08
+        sta PPU_DATA
+        
+; Draw tile 09
+	lda PPU_STATUS
+        PPU_SETADDR $2234
+        lda #$09
+        sta PPU_DATA
+        
+; Draw tile 0a
+	lda PPU_STATUS
+        PPU_SETADDR $2214
+        lda #$0a
+        sta PPU_DATA
+        
+; Draw tile 0b
+	lda PPU_STATUS
+        PPU_SETADDR $21f4
+        lda #$0b
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $21d4
+        lda #$0b
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2606
+        lda #$0b
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2626
+        lda #$0b
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2610
+        lda #$0b
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2630
+        lda #$0b
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $25d8
+        lda #$0b
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $25f8
+        lda #$0b
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2618
+        lda #$0b
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2638
+        lda #$0b
+        sta PPU_DATA
+        
+; Draw tile 0c
+	lda PPU_STATUS
+        PPU_SETADDR $222d
+        lda #$0c
+        sta PPU_DATA
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2194
+        lda #$0c
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $21b3
+        lda #$0c
+        sta PPU_DATA
+        sta PPU_DATA
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $25c6
+        lda #$0c
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $25e6
+        lda #$0c
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $25d0
+        lda #$0c
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $25ef
+        lda #$0c
+        sta PPU_DATA
+        sta PPU_DATA
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $25b8
+        lda #$0c
+        sta PPU_DATA
+        
+; Draw tile 0d
+	lda PPU_STATUS
+        PPU_SETADDR $2223
+        lda #$0d
+        sta PPU_DATA 
+        
+        lda PPU_STATUS
+        PPU_SETADDR $222c
+        lda #$0d
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $220d
+        lda #$0d
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $21b2
+        lda #$0d
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2193
+        lda #$0d
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $25cf
+        lda #$0d
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $25b7
+        lda #$0d
+        sta PPU_DATA
+        
+; Draw tile 0e
+	lda PPU_STATUS
+        PPU_SETADDR $2224
+        lda #$0e
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $220e
+        lda #$0e
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2195
+        lda #$0e
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $21b6
+        lda #$0e
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $25d1
+        lda #$0e
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $25b9
+        lda #$0e
+        sta PPU_DATA
+        
+; Finally, attribute tables
+	lda PPU_STATUS
+        PPU_SETADDR $23f0
+        lda #%01010000
+        sta PPU_DATA
+        sta PPU_DATA
+        sta PPU_DATA
+        sta PPU_DATA
+        sta PPU_DATA
+        sta PPU_DATA
+        sta PPU_DATA
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $27f0
+        lda #%01010000
+        sta PPU_DATA
+        sta PPU_DATA
+        sta PPU_DATA
+        sta PPU_DATA
+        sta PPU_DATA
+        sta PPU_DATA
+        sta PPU_DATA
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $23e0
+        lda #%10101000
+        sta PPU_DATA
+        lda #%10100010
+        sta PPU_DATA
+        lda #%10100000
+        sta PPU_DATA
+        lda #%10101010
+        sta PPU_DATA
+        lda #%10100000
+        sta PPU_DATA
+        lda #%10100001
+        sta PPU_DATA
+        lda #%10100000
+        sta PPU_DATA
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $27e0
+        lda #%10100000
+        sta PPU_DATA
+        lda #%10100110
+        sta PPU_DATA
+        lda #%10100000
+        sta PPU_DATA
+        lda #%10100000
+        sta PPU_DATA
+        lda #%10100001
+        sta PPU_DATA
+        lda #%10100000
+        sta PPU_DATA
+        lda #%10100001
+        sta PPU_DATA
+        lda #%10100000
+        sta PPU_DATA
+        
+        
+        lda PPU_STATUS
+        PPU_SETADDR $23dc
+        lda #%00001000
+        sta PPU_DATA
+        lda #%00011010
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $27d9
+        lda #%10000000
+        sta PPU_DATA
+        PPU_SETADDR $27db
+        lda #%10000000
+        sta PPU_DATA
+        lda #%00100000
+        sta PPU_DATA
+        lda #%00001000
+        sta PPU_DATA
+        lda #%00010010
+        sta PPU_DATA
+        
+        
+        
+        rts
