@@ -10,7 +10,15 @@ Ptr		.word	; use for temp pointer storage
 Speed		.byte   ; vertical speed of character
 Scroll		.byte   ; horizontal scroll
 PPUCtrlSt	.byte	; PPU Control state
-PauseBit	.byte
+PauseBit	.byte	; Pause status
+Player_x	.byte	; Player x
+Player_y	.byte	; Player y
+player_dir	.byte	; Player direction
+player_spd	.byte	; Player speed
+CounterAnim	.byte	; Animation counter
+Legs		.byte	; Legs animation frame
+CounterPs	.byte	; Counter to prevent pausing too frequently
+Msg_flag	.byte	; Message flag
      
 
 ;;;;; NES CARTRIDGE HEADER
@@ -25,6 +33,10 @@ Start:
         jsr WaitSync	; wait for VSYNC
         jsr ClearRAM	; clear RAM
         jsr WaitSync	; wait for VSYNC (and PPU warmup)
+        
+        lda #0
+        sta PPU_ADDR
+        sta PPU_ADDR	; PPU addr = $0000
         
         lda #255
         STA Scroll	; store scroll counter
@@ -43,14 +55,105 @@ Start:
         
         jsr DrawBG
         
+        lda #184
+        sta Player_y
+        lda #40
+        sta Player_x
+        
 ; activate PPU graphics
         lda #%00011110
         sta PPU_MASK	; enable rendering
         lda #%10010000
         sta PPU_CTRL	; enable NMI
         sta PPUCtrlSt
+        
+        ;;;;;;TODO START TO START GAME
+        
+        
 .endless
 	jmp .endless	; endless loop
+        
+draw_sprite0:
+	;;;;;;;;;;;;;TODO DRAW SPRITE 0 from 2a
+        lda #20
+        sta $0200
+        lda #$2a
+        sta $0201
+        lda #$20
+        sta $0202
+        lda #$f1
+        sta $0203
+	rts
+        
+draw_player:
+	inc CounterAnim
+	lda CounterAnim
+        cmp #12
+        bne set_sprites
+        lda #$00
+        sta CounterAnim
+        lda Legs
+        eor #$01
+        sta Legs
+        	
+set_sprites:        
+	lda #$01
+        sta $0205
+        lda #$02
+        sta $0209
+        
+        lda Legs
+        cmp #$01
+        bne draw_legs2
+draw_legs1:        
+        lda #$03
+        sta $020d
+        lda #$04
+        sta $0211
+        jmp set_charpal
+        
+draw_legs2        
+        lda #$05
+        sta $020d
+        lda #$06
+        sta $0211
+set_charpal:        
+; set palette for character sprite
+	lda #$00
+        sta $0204
+        sta $020a
+        sta $020e
+        sta $0212
+        
+; set x and y pos for character sprite
+	lda Player_y
+        sta $0204
+        lda Player_x
+        sta $0207
+        
+        lda Player_x
+        clc
+        adc #$08
+        sta $020b
+        lda Player_y
+        sta $0208
+        
+        lda Player_y
+        clc
+        adc #$08
+        sta $020c
+        lda Player_x
+        sta $020f
+        
+        lda Player_y
+        clc
+        adc #$08
+        sta $0210
+        lda Player_x
+        clc
+        adc #$08
+        sta $0213
+        rts
 
 ;;;;; COMMON SUBROUTINES
 
@@ -60,11 +163,50 @@ Start:
 ;;;;; INTERRUPT HANDLERS
 
 NMIHandler:
+	SAVE_REGS
 	lda #$00
         sta OAM_ADDR
         lda #$02
         sta OAM_DMA
         lda #$00
+        
+        lda #$00
+        sta PPU_SCROLL
+        sta PPU_SCROLL
+        
+        lda CounterPs
+       	cmp #$10
+        beq read_pad
+        inc CounterPs
+        
+read_pad:        
+        jsr ReadJoypad0
+        pha
+        and #$10
+        cmp #$10
+        bne read_jmp
+        lda CounterPs
+        cmp #$10
+        bne read_jmp
+        lda PauseBit
+        eor #$01
+        sta PauseBit
+        lda #$00
+        sta CounterPs
+read_jmp:        
+        pla
+        
+        jsr draw_player
+        jsr draw_sprite0
+        ;jsr draw_score
+        ;jsr draw_life
+        ;jsr draw_msg
+        
+        ; Prevent scrolling for score and life bars
+.wait0	bit PPU_STATUS
+        bvs .wait0
+.wait1	bit PPU_STATUS
+        bvc .wait1
         
         lda Scroll
         cmp #255
@@ -76,33 +218,38 @@ NMIHandler:
         sta PPU_CTRL
         lda #$0
         sta Scroll
+        
 
 set_scroll_pos:
+	lda Scroll
+        sta PPU_SCROLL
+	lda #$00
+        sta PPU_SCROLL
+
 	lda PauseBit
         cmp #$00
         bne prevent_scroll
         
         inc Scroll
         lda Scroll
+        
         sta PPU_SCROLL
         lda #$00
         sta PPU_SCROLL
 prevent_scroll:
+	RESTORE_REGS
 	rti
         
 ;;;;; CONSTANT DATA
-
-Tile1:
-	hex 1a
         
 Palette:
 	hex 22271720	; Palette 1
         hex 22061719	; Palette 2
         hex 22192a3b	; Palette 3
         hex 22222222	; Palette 4 placeholder
-        hex 22222222	; Sprite 1
-        hex 22222222	; Sprite 2
-        hex 22222222	; Sprite 3
+        hex 22102d00	; Sprite 1
+        hex 22112131	; Sprite 2
+        hex 2219092a	; Sprite 3
         hex 22222222	; Sprite 4
 
 

@@ -641,6 +641,56 @@ Setup4:
         lda #$0e
         sta PPU_DATA
         
+; Draw "SCORE"
+	lda PPU_STATUS
+        PPU_SETADDR $2026
+        lda #$1c
+        sta PPU_DATA
+        lda #$11
+        sta PPU_DATA
+        lda #$19
+        sta PPU_DATA
+        lda #$1b
+        sta PPU_DATA
+        lda #$12
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2426
+        lda #$1c
+        sta PPU_DATA
+        lda #$11
+        sta PPU_DATA
+        lda #$19
+        sta PPU_DATA
+        lda #$1b
+        sta PPU_DATA
+        lda #$12
+        sta PPU_DATA
+        
+; Draw "LIFE"
+	lda PPU_STATUS
+        PPU_SETADDR $2036
+        lda #$2b
+        sta PPU_DATA
+        lda #$16
+        sta PPU_DATA
+        lda #$13
+        sta PPU_DATA
+        lda #$12
+        sta PPU_DATA
+        
+        lda PPU_STATUS
+        PPU_SETADDR $2436
+        lda #$2b
+        sta PPU_DATA
+        lda #$16
+        sta PPU_DATA
+        lda #$13
+        sta PPU_DATA
+        lda #$12
+        sta PPU_DATA
+        
 ; Finally, attribute tables
 	lda PPU_STATUS
         PPU_SETADDR $23f0
