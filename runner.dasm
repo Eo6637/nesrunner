@@ -18,7 +18,17 @@ player_spd	.byte	; Player speed
 CounterAnim	.byte	; Animation counter
 Legs		.byte	; Legs animation frame
 CounterPs	.byte	; Counter to prevent pausing too frequently
+Msg_x		.byte	; Message x position
+Msg_y		.byte	; Message y position
 Msg_flag	.byte	; Message flag
+Msg_counter	.byte	; Message timing counter
+Score		.byte	; Player score
+Life		.byte	; Player lives
+Cur_enemy	.byte	; Current enemy flag
+Enemy_x		.byte	; Enemy x
+Enemy_y		.byte	; Enemy y
+Enemy_vels	.byte	; Enemy x velocity
+
      
 
 ;;;;; NES CARTRIDGE HEADER
@@ -39,7 +49,32 @@ Start:
         sta PPU_ADDR	; PPU addr = $0000
         
         lda #255
-        STA Scroll	; store scroll counter
+        sta Scroll	; store scroll counter
+        
+        lda #$00
+        sta Score
+        
+        lda #$03
+        sta Life
+        
+        lda #$00
+        sta Msg_flag
+        
+        lda #112
+        sta Msg_x
+        
+       	lda #207
+        sta Msg_y
+        
+        lda #$00
+        sta Cur_enemy
+        
+        ;;;;;;;;;;;;;;;TEMP FOR TESTING
+        lda #$03
+        sta Msg_flag
+        lda #$40
+        sta Msg_counter
+        
         
 ; set palette
 	lda #$3f	; $3F -> A register
@@ -120,7 +155,7 @@ draw_legs2
 set_charpal:        
 ; set palette for character sprite
 	lda #$00
-        sta $0204
+        sta $0206
         sta $020a
         sta $020e
         sta $0212
@@ -154,6 +189,251 @@ set_charpal:
         adc #$08
         sta $0213
         rts
+        
+update_player:
+	ldx PauseBit
+        cpx #$01
+        beq end_update_pl
+	pha
+        and #%00000100
+        cmp #%00000100
+        bne check_up
+        lda Player_y
+        cmp #184
+        beq check_up
+        lda #184
+        sta Player_y
+check_up:        
+        pla
+        and #%00001000
+        cmp #%00001000
+        bne end_update_pl
+        lda Player_y
+        cmp #164
+        beq end_update_pl
+        lda #164
+        sta Player_y        
+end_update_pl:        
+        rts
+        
+draw_msg:
+	;Clear msg sprites
+        lda #$00
+        sta $0231
+        sta $0235
+        sta $0239
+        sta $023d
+        sta $0241
+        sta $0245
+        sta $0249
+        sta $024d
+        
+	lda Msg_flag
+        cmp #$00
+        bne msg2
+        ; Set message: GO!!
+        lda #$14
+        sta $0231
+        lda #$19
+        sta $0235
+        lda #$0d
+        sta $0239
+        sta $023d
+        
+        lda Msg_y
+        sta $0230
+        sta $0234
+        sta $0238
+        sta $023c
+        
+        lda Msg_x
+        sta $0233
+        clc
+        adc #$08
+        sta $0237
+        clc 
+        adc #$08
+        sta $023b
+        clc
+        adc #$08
+        sta $023f
+        
+        lda #$03
+        sta $0232
+        sta $0236
+        sta $023a
+        sta $023e
+        jmp endMsg
+        
+msg2:
+	cmp #$01
+        bne msg3
+        ; PAUSE
+        lda #$1a
+        sta $0231
+        lda #$10
+        sta $0235
+        lda #$1e
+        sta $0239
+        lda #$1c
+        sta $023d
+        lda #$12
+        sta $0241
+        
+        lda Msg_y
+        sta $0230
+        sta $0234
+        sta $0238
+        sta $023c
+        sta $0240
+        
+        lda Msg_x
+        sta $0233
+        clc
+        adc #$08
+        sta $0237
+        clc 
+        adc #$08
+        sta $023b
+        clc
+        adc #$08
+        sta $023f
+        clc
+        adc #$08
+        sta $0243
+        
+        lda #$03
+        sta $0232
+        sta $0236
+        sta $023a
+        sta $023e
+        sta $0242
+        jmp endMsg
+        
+msg3:	
+	cmp #$02
+        bne msg4
+        ; OUCH!!
+        lda #$19
+        sta $0231
+        lda #$1e
+        sta $0235
+        lda #$11
+        sta $0239
+        lda #$15
+        sta $023d
+        lda #$0d
+        sta $0241
+        
+        lda Msg_y
+        sta $0230
+        sta $0234
+        sta $0238
+        sta $023c
+        sta $0240
+        
+        lda Msg_x
+        sta $0233
+        clc
+        adc #$08
+        sta $0237
+        clc 
+        adc #$08
+        sta $023b
+        clc
+        adc #$08
+        sta $023f
+        clc
+        adc #$08
+        sta $0243
+        
+        lda #$03
+        sta $0232
+        sta $0236
+        sta $023a
+        sta $023e
+        sta $0242
+        
+        dec Msg_counter
+        lda Msg_counter
+        cmp #$00
+        bne gotoEndMsg
+        lda #$00
+        sta Msg_flag
+        jmp endMsg
+        
+msg4:	
+	cmp #$03
+        bne gotoEndMsg
+        ; GAME OVER
+        lda #$14
+        sta $0231
+        lda #$10
+        sta $0235
+        lda #$17
+        sta $0239
+        lda #$12
+        sta $023d
+        lda #$19
+        sta $0241
+        lda #$1f
+        sta $0245
+        lda #$12
+        sta $0249
+        lda #$1b
+        sta $024d
+        
+        lda Msg_y
+        sta $0230
+        sta $0234
+        sta $0238
+        sta $023c
+        clc
+        adc #$08
+        sta $0240
+        sta $0244
+        sta $0248
+        sta $024c
+        jmp gOverX
+        
+gotoEndMsg:
+	jmp endMsg
+gOverX:        
+        lda Msg_x
+        sta $0233
+        sta $0243
+        clc
+        adc #$08
+        sta $0237
+        sta $0247
+        clc 
+        adc #$08
+        sta $023b
+        sta $024b
+        clc
+        adc #$08
+        sta $023f
+        sta $024f
+        
+        lda #$03
+        sta $0232
+        sta $0236
+        sta $023a
+        sta $023e
+        sta $0242
+        sta $0246
+        sta $024a
+        sta $024e
+        
+        dec Msg_counter
+        lda Msg_counter
+        cmp #$40
+        bne gotoEndMsg
+        lda #$00
+        sta Msg_flag
+        
+endMsg:
+	rts
 
 ;;;;; COMMON SUBROUTINES
 
@@ -191,16 +471,18 @@ read_pad:
         lda PauseBit
         eor #$01
         sta PauseBit
+        sta Msg_flag
         lda #$00
         sta CounterPs
 read_jmp:        
         pla
+        jsr update_player
         
         jsr draw_player
         jsr draw_sprite0
         ;jsr draw_score
         ;jsr draw_life
-        ;jsr draw_msg
+        jsr draw_msg
         
         ; Prevent scrolling for score and life bars
 .wait0	bit PPU_STATUS
@@ -250,7 +532,7 @@ Palette:
         hex 22102d00	; Sprite 1
         hex 22112131	; Sprite 2
         hex 2219092a	; Sprite 3
-        hex 22222222	; Sprite 4
+        hex 22222220	; Sprite 4
 
 
 ;;;;; CPU VECTORS
