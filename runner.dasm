@@ -224,8 +224,8 @@ update_player:
         cpx #$01
         beq end_update_pl
 	pha
-        and #%00000100
-        cmp #%00000100
+        and #%00000001
+        cmp #%00000001
         bne check_up
         lda Player_y
         cmp #184
@@ -234,8 +234,8 @@ update_player:
         sta Player_y
 check_up:        
         pla
-        and #%00001000
-        cmp #%00001000
+        and #%00000010
+        cmp #%00000010
         bne end_update_pl
         lda Player_y
         cmp #164
