@@ -82,7 +82,7 @@ Start:
         lda #$01
         sta Enemy_vels
         
-        lda #$ff
+        lda #$40
         sta NewTimer
         
         lda #$40
