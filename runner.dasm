@@ -22,12 +22,15 @@ Msg_x		.byte	; Message x position
 Msg_y		.byte	; Message y position
 Msg_flag	.byte	; Message flag
 Msg_counter	.byte	; Message timing counter
-Score		.byte	; Player score
+ScoreDig1	.byte	; Player score digit 1
+ScoreDig2	.byte	; Player score digit 2
 Life		.byte	; Player lives
 Cur_enemy	.byte	; Current enemy flag
 Enemy_x		.byte	; Enemy x
 Enemy_y		.byte	; Enemy y
 Enemy_vels	.byte	; Enemy x velocity
+New		.byte	; New Game flag
+NewTimer	.byte	; New Game timer
 
      
 
@@ -52,7 +55,8 @@ Start:
         sta Scroll	; store scroll counter
         
         lda #$00
-        sta Score
+        sta ScoreDig1
+        sta ScoreDig2
         
         lda #$03
         sta Life
@@ -66,12 +70,21 @@ Start:
        	lda #207
         sta Msg_y
         
-        lda #$00
+        lda #$01
         sta Cur_enemy
         
-        ;;;;;;;;;;;;;;;TEMP FOR TESTING
-        lda #$03
-        sta Msg_flag
+        lda #$ff
+        sta Enemy_x
+        
+        lda #164
+        sta Enemy_y
+        
+        lda #$01
+        sta Enemy_vels
+        
+        lda #$ff
+        sta NewTimer
+        
         lda #$40
         sta Msg_counter
         
@@ -102,11 +115,27 @@ Start:
         sta PPU_CTRL	; enable NMI
         sta PPUCtrlSt
         
-        ;;;;;;TODO START TO START GAME
+        lda #$01
+        sta PauseBit
+        lda #$01
+        sta Msg_flag
         
         
 .endless
+	;;;;;;; CHECK FOR LIFE == 0
 	jmp .endless	; endless loop
+        
+gameOver:
+	lda #$01
+        sta PauseBit
+        lda #$03
+        sta Msg_flag
+.gOverLoop:
+	jsr ReadJoypad0
+        and #$10
+        cmp #$10
+        bne .gOverLoop
+        jmp Start
         
 draw_sprite0:
 	;;;;;;;;;;;;;TODO DRAW SPRITE 0 from 2a
@@ -147,7 +176,7 @@ draw_legs1:
         sta $0211
         jmp set_charpal
         
-draw_legs2        
+draw_legs2:        
         lda #$05
         sta $020d
         lda #$06
@@ -358,6 +387,8 @@ msg3:
         lda Msg_counter
         cmp #$00
         bne gotoEndMsg
+        lda #$40
+        sta Msg_counter
         lda #$00
         sta Msg_flag
         jmp endMsg
@@ -434,6 +465,226 @@ gOverX:
         
 endMsg:
 	rts
+        
+draw_score:
+	lda ScoreDig1
+        clc
+        adc #$20
+        sta $0215
+        lda ScoreDig2
+        clc
+        adc #$20
+        sta $0219
+        
+        lda #16		; Score y
+        sta $0214
+        sta $0218
+        
+        lda #60		; Score x
+        sta $0217
+        clc
+        adc #$08
+        sta $021b
+        
+        lda #$03
+        sta $0216
+        sta $021a
+        rts
+
+draw_life:
+	lda #$00
+        sta $021d
+        sta $0221
+        sta $0225
+
+	lda Life
+        cmp #$00
+        beq endDL
+        lda #$2b
+        sta $021d
+        lda Life
+        cmp #$01
+        beq endDL
+        lda #$2b
+        sta $0221
+        lda Life
+        cmp #$02
+        beq endDL
+        lda #$2b
+        sta $0225
+        
+        
+endDL:
+	lda #16		; Life y
+        sta $021c
+        sta $0220
+        sta $0224
+        
+        lda #180	; Life x
+        sta $021f
+        clc
+        adc #$08
+        sta $0223
+        clc
+        adc #$08
+        sta $0227
+        
+        lda #$03
+        sta $021e
+        sta $0222
+        sta $0226
+        rts
+        
+inc_score:
+	lda ScoreDig2
+        cmp #$09
+        beq tens
+        inc ScoreDig2
+        jmp endScore     
+tens:
+	lda #$00
+        sta ScoreDig2
+        lda ScoreDig1
+        cmp #$09
+        beq resetSc
+        inc ScoreDig1
+        jmp endScore
+resetSc:
+	lda #$00
+        sta ScoreDig1
+endScore:
+	rts
+        
+process_enemy:
+	inc Player_x
+        inc Player_x
+        inc Player_x
+        inc Player_x
+        inc Player_x
+        inc Player_x
+        inc Player_x
+        inc Player_x
+        
+        lda PauseBit
+        cmp #$01
+        beq endPrcEn
+        
+        lda NewTimer
+        cmp #$00
+        beq proEnem
+        dec NewTimer
+        jmp endPrcEn
+        
+proEnem:        
+	lda Cur_enemy
+        and #$01
+        beq spawn
+        ldx Enemy_vels
+velsLoop:        
+        dex
+        dec Enemy_x
+        lda Enemy_x
+        cmp #$00
+        beq despawn
+        cmp Player_x
+        beq maybe_hurt_player
+after_hurt:
+        cpx #$00
+        bne velsLoop
+        jmp endPrcEn
+        
+despawn:
+	lda #$00
+        sta Cur_enemy
+        jmp endPrcEn
+        
+maybe_hurt_player:
+	jsr inc_score
+	lda Enemy_y
+        cmp Player_y
+        beq hurt_player
+        jmp after_hurt
+        
+spawn:
+	inc Cur_enemy
+        lda ScoreDig1
+        clc
+        adc #$01
+        ;lda #$03
+        sta Enemy_vels
+        lda #$ff
+        sta Enemy_x
+        lda ScoreDig2
+        jsr NextRandom	; Generate random num
+        and #$01
+        beq setY2
+setY1:	
+	lda #164
+        sta Enemy_y
+        jmp endPrcEn
+setY2:	
+	lda #184
+        sta Enemy_y
+        
+endPrcEn:
+	dec Player_x
+        dec Player_x
+        dec Player_x
+        dec Player_x
+        dec Player_x
+        dec Player_x
+        dec Player_x
+        dec Player_x
+	rts
+hurt_player:
+	dec Life
+        lda #$02
+        sta Msg_flag
+        jmp after_hurt
+        
+draw_enemy:
+	lda #$00
+        sta $0251
+        sta $0255
+        sta $0259
+        sta $025d
+	lda Cur_enemy
+        cmp #$00
+        beq endDE
+        lda #$09
+        sta $0251
+        lda #$0a
+        sta $0255
+        lda #$0b
+        sta $0259
+        lda #$0c
+        sta $025d
+        
+        lda Enemy_y
+        sta $0250
+        sta $0254
+        clc 
+        adc #$08
+        sta $0258
+        sta $025c
+        
+        lda Enemy_x
+        sta $0253
+        sta $025b
+        clc
+        adc #$08
+        sta $0257
+        sta $025f
+        
+        lda #$02
+        sta $0252
+        sta $0256
+        sta $025a
+        sta $025e
+endDE:
+	rts
+        
+        
 
 ;;;;; COMMON SUBROUTINES
 
@@ -480,9 +731,16 @@ read_jmp:
         
         jsr draw_player
         jsr draw_sprite0
-        ;jsr draw_score
-        ;jsr draw_life
+        jsr draw_score
+        jsr draw_life
         jsr draw_msg
+        jsr process_enemy
+        jsr draw_enemy
+        
+        lda Life
+        cmp #$00
+        bne .wait0
+        jsr gameOver
         
         ; Prevent scrolling for score and life bars
 .wait0	bit PPU_STATUS
@@ -532,7 +790,7 @@ Palette:
         hex 22102d00	; Sprite 1
         hex 22112131	; Sprite 2
         hex 2219092a	; Sprite 3
-        hex 22222220	; Sprite 4
+        hex 22221520	; Sprite 4
 
 
 ;;;;; CPU VECTORS
